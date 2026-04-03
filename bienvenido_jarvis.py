@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Double-clap welcome script for Señor Tatay.
+J.A.R.V.I.S. - Just A Rather Very Intelligent System
 
-Detects 2 claps → voz AI dice bienvenido → abre YouTube → Claude + Cursor lado a lado.
+Double-clap activation → voice greeting → opens music → Claude + Cursor side by side.
 
-Dependencias:
+Dependencies:
     pip install sounddevice numpy pyttsx3
 
-Uso:
-    python bienvenido_tatay.py
+Usage:
+    python bienvenido_jarvis.py
 """
 
 import os
@@ -32,8 +32,8 @@ COOLDOWN       = 0.1    # segundos de pausa mínima entre aplausos
 DOUBLE_WINDOW  = 2.0     # ventana de tiempo para el segundo aplauso
 
 YOUTUBE_URL    = "https://www.youtube.com/watch?v=hEIexwwiKKU"
-MENSAJE        = "Bienvenido a casa, señor Tatay."
-NEW_PROJECT    = os.path.expanduser("~/Desktop/nuevo_proyecto")
+MENSAJE        = "Welcome home, sir. All systems are online and ready."
+NEW_PROJECT    = os.path.expanduser("~/Desktop/stark_industries")
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Estado global
@@ -66,7 +66,7 @@ def audio_callback(indata, frames, time_info, status):
             clap_times = [t for t in clap_times if now - t <= DOUBLE_WINDOW]
 
             count = len(clap_times)
-            print(f"  👏  Aplauso {count}/2  (RMS={rms:.3f})")
+            print(f"  [ JARVIS ]  Signal detected {count}/2  (RMS={rms:.3f})")
 
             if count >= 2:
                 triggered = True
@@ -78,38 +78,39 @@ def audio_callback(indata, frames, time_info, status):
 #  Secuencia de bienvenida
 # ──────────────────────────────────────────────────────────────────────────────
 def secuencia_bienvenida():
-    print("\n🚀  Iniciando secuencia de bienvenida…\n")
+    print("\n[ JARVIS ]  Initializing welcome sequence...\n")
 
     hablar(MENSAJE)
     abrir_youtube()
     abrir_apps_lado_a_lado()
 
-    print("\n✅  Secuencia completada.\n")
+    print("\n[ JARVIS ]  All systems nominal. Good to have you back, sir.\n")
 
 
 def hablar(texto: str):
     """TTS local con pyttsx3 (usa voces del sistema, sin API key)."""
-    print(f"  🔊  Diciendo: «{texto}»")
+    print(f"  [ JARVIS ]  Vocalizing: \"{texto}\"")
 
-    # Primero intenta con el comando 'say' de macOS (mejor calidad)
-    resultado = subprocess.run(
-        ["say", "-v", "Monica", texto],
-        capture_output=True
-    )
-    if resultado.returncode == 0:
-        return  # éxito con Monica (voz española de macOS)
+    # Prefer Daniel (British English) — closest to JARVIS's accent
+    for voice in ["Daniel", "Oliver", "Alex"]:
+        resultado = subprocess.run(
+            ["say", "-v", voice, texto],
+            capture_output=True
+        )
+        if resultado.returncode == 0:
+            return
 
     # Fallback: pyttsx3
     engine = pyttsx3.init()
     voices = engine.getProperty("voices")
 
-    # Busca voz en español
-    esp = [v for v in voices if "es" in v.id.lower() or "spanish" in v.name.lower()]
-    if esp:
-        engine.setProperty("voice", esp[0].id)
-        print(f"     Voz seleccionada: {esp[0].name}")
+    # Prefer British/English voice
+    british = [v for v in voices if "en_GB" in v.id or "daniel" in v.name.lower()]
+    if british:
+        engine.setProperty("voice", british[0].id)
+        print(f"     Voice selected: {british[0].name}")
     else:
-        print("     Usando voz por defecto (no se encontró voz en español)")
+        print("     Using default voice")
 
     engine.setProperty("rate", 148)
     engine.say(texto)
@@ -117,9 +118,9 @@ def hablar(texto: str):
 
 
 def abrir_youtube():
-    print(f"  🎵  Abriendo YouTube…")
+    print(f"  [ JARVIS ]  Launching music, sir...")
     webbrowser.open(YOUTUBE_URL)
-    time.sleep(1.2)  # deja que el navegador cargue antes de seguir
+    time.sleep(1.2)
 
 
 def abrir_apps_lado_a_lado():
@@ -129,13 +130,13 @@ def abrir_apps_lado_a_lado():
     # Asegura que existe la carpeta del nuevo proyecto
     os.makedirs(NEW_PROJECT, exist_ok=True)
 
-    # ── Abre Claude ──────────────────────────────────────────────────────────
-    print("  🤖  Abriendo Claude…")
+    # ── Open Claude ──────────────────────────────────────────────────────────
+    print("  [ JARVIS ]  Bringing up AI interface...")
     subprocess.Popen(["open", "-a", "Claude"])
     time.sleep(1.8)
 
-    # ── Abre Cursor con nuevo proyecto ───────────────────────────────────────
-    print("  💻  Abriendo Cursor…")
+    # ── Open Cursor with project ─────────────────────────────────────────────
+    print("  [ JARVIS ]  Loading Stark Industries workspace...")
     cursor_cmd = encontrar_cursor()
     if cursor_cmd:
         subprocess.Popen([cursor_cmd, NEW_PROJECT])
@@ -143,8 +144,8 @@ def abrir_apps_lado_a_lado():
         subprocess.Popen(["open", "-a", "Cursor", NEW_PROJECT])
     time.sleep(1.8)
 
-    # ── Coloca ventanas lado a lado con AppleScript ──────────────────────────
-    print("  🪟  Organizando ventanas…")
+    # ── Arrange windows side by side via AppleScript ─────────────────────────
+    print("  [ JARVIS ]  Configuring holographic display...")
     applescript = f"""
     tell application "System Events"
         try
@@ -206,8 +207,9 @@ def main():
     global triggered
 
     print("=" * 55)
-    print("  🎤  Escuchando aplausos… (Ctrl+C para salir)")
-    print(f"  Umbral actual: {THRESHOLD}  (ajusta THRESHOLD si falla)")
+    print("  J.A.R.V.I.S. — Online and standing by, sir.")
+    print("  Awaiting double clap... (Ctrl+C to shut down)")
+    print(f"  Sensitivity threshold: {THRESHOLD}")
     print("=" * 55)
 
     try:
@@ -224,9 +226,9 @@ def main():
                     # Espera a que la secuencia acabe y vuelve a escuchar
                     time.sleep(8)
                     triggered = False
-                    print("\n👂  Escuchando de nuevo…\n")
+                    print("\n[ JARVIS ]  Standing by for next command, sir.\n")
     except KeyboardInterrupt:
-        print("\n\nHasta luego! 👋")
+        print("\n\n[ JARVIS ]  Powering down. Have a good evening, sir.")
         sys.exit(0)
 
 
