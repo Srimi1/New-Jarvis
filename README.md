@@ -11,28 +11,44 @@ Clap twice and JARVIS greets you, opens your music, and launches your full works
 3. **Online only**: Opens YouTube + YouTube Music in the browser
 4. Launches your workspace apps:
    - **Antigravity**
-   - **Claude** (AI assistant)
+   - **Claude** (AI assistant app)
    - **Terminal** with Claude Code CLI (`claude`) running inside
-
-## Installation
-
-```bash
-pip install -r requirements.txt
-```
-
-## Usage
-
-```bash
-python bienvenido_jarvis.py
-```
-
-Press `Ctrl+C` to shut down.
-
-> **Tip:** If claps aren't detected, adjust `THRESHOLD` in the script. Increase it to reduce false triggers from background noise; decrease it if real claps aren't registering.
 
 ## Requirements
 
 - macOS
 - Python 3.9+
 - Microphone
-- Claude Code CLI installed (`npm install -g @anthropic-ai/claude-code` or `pip install claude-code`)
+- Claude Code CLI (optional — needed for Terminal launch): [claude.ai/code](https://claude.ai/code)
+
+## Installation
+
+Clone the repo, then run the installer once:
+
+```bash
+chmod +x install.sh && ./install.sh
+```
+
+The installer will:
+- Verify Python 3.9+
+- Create a `.venv/` virtual environment
+- Install all Python dependencies
+- Warn if `claude` CLI is missing
+- Generate a `jarvis.sh` launcher
+
+## Usage
+
+```bash
+./jarvis.sh
+```
+
+Press `Ctrl+C` to shut down.
+
+> **Tip:** If claps aren't detected, adjust `THRESHOLD` in `bienvenido_jarvis.py`.
+> Increase it to reduce false triggers from background noise;
+> decrease it if real claps aren't registering.
+
+## macOS Permissions
+
+The first time you run JARVIS, macOS will ask for **microphone access** — click **Allow**.
+Without it, clap detection won't work.
