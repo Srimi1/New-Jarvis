@@ -2,8 +2,8 @@
 """
 J.A.R.V.I.S. - Just A Rather Very Intelligent System
 
-Double-clap activation → voice greeting → opens media (YouTube / YouTube Music) → 
-simultaneously opens Antigravity, Claude, Terminal, Discord, and Cursor.
+Double-clap activation → internet check → voice greeting → opens media →
+simultaneously opens Antigravity, Claude, and Claude Code in Terminal.
 
 Dependencies:
     pip install sounddevice numpy pyttsx3
@@ -15,6 +15,7 @@ Usage:
 import os
 import sys
 import time
+import socket
 import threading
 import subprocess
 import webbrowser
@@ -26,18 +27,18 @@ import pyttsx3
 # ──────────────────────────────────────────────────────────────────────────────
 #  Configuración
 # ──────────────────────────────────────────────────────────────────────────────
-SAMPLE_RATE    = 44100
-BLOCK_SIZE     = int(SAMPLE_RATE * 0.05)   # 50 ms por bloque
-THRESHOLD      = 0.20     # RMS mínimo para contar como aplauso  ← ajusta si falla
-COOLDOWN       = 0.1    # segundos de pausa mínima entre aplausos
-DOUBLE_WINDOW  = 2.0     # ventana de tiempo para el segundo aplauso
+SAMPLE_RATE   = 44100
+BLOCK_SIZE    = int(SAMPLE_RATE * 0.05)   # 50 ms por bloque
+THRESHOLD     = 0.20     # RMS mínimo para contar como aplauso  ← ajusta si falla
+COOLDOWN      = 0.1      # segundos de pausa mínima entre aplausos
+DOUBLE_WINDOW = 2.0      # ventana de tiempo para el segundo aplauso
 
-# URLs de Medios (puedes agregar tu URL de YouTube Music aquí)
-YOUTUBE_URL    = "https://www.youtube.com/watch?v=hEIexwwiKKU"
-YOUTUBE_MUSIC_URL = ""  # Ejemplo: "https://music.youtube.com/watch?v=..."
+# URLs de Medios
+YOUTUBE_URL       = "https://www.youtube.com/watch?v=hEIexwwiKKU"
+YOUTUBE_MUSIC_URL = "https://music.youtube.com/"
 
-MENSAJE        = "Welcome home, sir. All systems are online and running smoothly. Opening your workspace now."
-NEW_PROJECT    = os.path.expanduser("~/Desktop/stark_industries")
+MENSAJE         = "Welcome home, sir. All systems are online and running smoothly. Opening your workspace now."
+MENSAJE_OFFLINE = "Welcome home, sir. Internet connection is unavailable. All systems are operating in offline mode."
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Estado global
@@ -82,24 +83,32 @@ def audio_callback(indata, frames, time_info, status):
 def secuencia_bienvenida():
     print("\n[ JARVIS ]  Initializing welcome sequence...\n")
 
-    hablar(MENSAJE)
-    abrir_musica()
+    if internet_disponible():
+        hablar(MENSAJE)
+        abrir_musica()
+    else:
+        print("  [ JARVIS ]  No internet connection detected.")
+        hablar(MENSAJE_OFFLINE)
+
     abrir_espacio_trabajo()
 
     print("\n[ JARVIS ]  All systems nominal. Good to have you back, sir.\n")
 
 
 def hablar(texto: str):
-    """TTS local con pyttsx3 (usa voces del sistema, sin API key)."""
+    """TTS: tries macOS 'say' with British voice first, falls back to pyttsx3."""
     print(f"  [ JARVIS ]  Vocalizing: \"{texto}\"")
 
     for voice in ["Daniel", "Oliver", "Alex"]:
-        resultado = subprocess.run(
-            ["say", "-v", voice, texto],
-            capture_output=True
-        )
-        if resultado.returncode == 0:
-            return
+        try:
+            resultado = subprocess.run(
+                ["say", "-v", voice, texto],
+                capture_output=True
+            )
+            if resultado.returncode == 0:
+                return
+        except (FileNotFoundError, OSError):
+            break  # 'say' command not available — fall through to pyttsx3
 
     engine = pyttsx3.init()
     voices = engine.getProperty("voices")
@@ -117,25 +126,19 @@ def hablar(texto: str):
 
 
 def abrir_musica():
-    if YOUTUBE_URL:
-        print(f"  [ JARVIS ]  Launching YouTube, sir...")
-        webbrowser.open(YOUTUBE_URL)
-        time.sleep(0.5)
-        
-    if YOUTUBE_MUSIC_URL:
-        print(f"  [ JARVIS ]  Launching YouTube Music...")
-        webbrowser.open(YOUTUBE_MUSIC_URL)
-        time.sleep(0.5)
+    print(f"  [ JARVIS ]  Launching YouTube, sir...")
+    webbrowser.open(YOUTUBE_URL)
+    time.sleep(0.5)
+
+    print(f"  [ JARVIS ]  Launching YouTube Music...")
+    webbrowser.open(YOUTUBE_MUSIC_URL)
+    time.sleep(0.5)
 
 
 def abrir_espacio_trabajo():
-    os.makedirs(NEW_PROJECT, exist_ok=True)
-
     apps_to_open = [
         ("Antigravity", ["open", "-a", "Antigravity"]),
-        ("Claude", ["open", "-a", "Claude"]),
-        ("Terminal", ["open", "-a", "Terminal"]),
-        ("Discord", ["open", "-a", "Discord"])
+        ("Claude",      ["open", "-a", "Claude"]),
     ]
 
     for name, cmd in apps_to_open:
@@ -143,31 +146,25 @@ def abrir_espacio_trabajo():
         subprocess.Popen(cmd)
         time.sleep(0.5)
 
-    print("  [ JARVIS ]  Loading Stark Industries workspace in Cursor...")
-    cursor_cmd = encontrar_cursor()
-    if cursor_cmd:
-        subprocess.Popen([cursor_cmd, NEW_PROJECT])
-    else:
-        subprocess.Popen(["open", "-a", "Cursor", NEW_PROJECT])
+    # Open Terminal and launch Claude Code CLI inside it
+    print("  [ JARVIS ]  Launching Claude Code in Terminal...")
+    subprocess.Popen([
+        "osascript", "-e",
+        'tell application "Terminal" to do script "claude"'
+    ])
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Utilidades
 # ──────────────────────────────────────────────────────────────────────────────
-def encontrar_cursor():
-    """Devuelve la ruta del CLI de Cursor si está disponible."""
-    candidatos = [
-        "/usr/local/bin/cursor",
-        "/opt/homebrew/bin/cursor",
-        os.path.expanduser("~/.cursor/bin/cursor"),
-    ]
-    for path in candidatos:
-        if os.path.isfile(path):
-            return path
-    result = subprocess.run(["which", "cursor"], capture_output=True, text=True)
-    if result.returncode == 0:
-        return result.stdout.strip()
-    return None
+def internet_disponible() -> bool:
+    """Returns True if internet is reachable (pings Google DNS)."""
+    try:
+        socket.setdefaulttimeout(2)
+        socket.create_connection(("8.8.8.8", 53))
+        return True
+    except OSError:
+        return False
 
 
 # ──────────────────────────────────────────────────────────────────────────────

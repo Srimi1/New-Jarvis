@@ -1,28 +1,38 @@
-# 👏 Jarvis - Double Clap Home Automation
+# J.A.R.V.I.S. — Double Clap Workspace Activator
 
-Aplaude 2 veces y Jarvis te da la bienvenida, pone música y abre tus apps.
+Clap twice and JARVIS greets you, opens your music, and launches your full workspace automatically.
 
-## ¿Qué hace?
-1. Detecta 2 aplausos por el micrófono
-2. Una voz dice **"Bienvenido a casa, señor Tatay"**
-3. Abre YouTube con tu canción
-4. Abre **Claude** y **Cursor** lado a lado
+## What it does
 
-## Instalación
+1. Listens for **2 claps** via microphone
+2. Checks internet connection:
+   - **Online** — speaks *"Welcome home, sir. All systems are online and running smoothly. Opening your workspace now."*
+   - **Offline** — speaks *"Welcome home, sir. Internet connection is unavailable. All systems are operating in offline mode."*
+3. **Online only**: Opens YouTube + YouTube Music in the browser
+4. Launches your workspace apps:
+   - **Antigravity**
+   - **Claude** (AI assistant)
+   - **Terminal** with Claude Code CLI (`claude`) running inside
+
+## Installation
 
 ```bash
-pip install sounddevice numpy pyttsx3
+pip install -r requirements.txt
 ```
 
-## Uso
+## Usage
 
 ```bash
 python bienvenido_jarvis.py
 ```
 
-> Si no detecta los aplausos, ajusta `THRESHOLD` en el script (sube el valor si hay ruido, bájalo si no detecta).
+Press `Ctrl+C` to shut down.
 
-## Requisitos
+> **Tip:** If claps aren't detected, adjust `THRESHOLD` in the script. Increase it to reduce false triggers from background noise; decrease it if real claps aren't registering.
+
+## Requirements
+
 - macOS
 - Python 3.9+
-- Micrófono
+- Microphone
+- Claude Code CLI installed (`npm install -g @anthropic-ai/claude-code` or `pip install claude-code`)

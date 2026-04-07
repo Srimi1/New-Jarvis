@@ -2,7 +2,7 @@
 """
 J.A.R.V.I.S. - Just A Rather Very Intelligent System
 
-Double-clap activation → voice greeting → opens music → Claude + Cursor side by side.
+Double-clap activation → internet check → voice greeting → opens media → launches apps.
 
 Dependencies:
     pip install sounddevice numpy pyttsx3
@@ -14,6 +14,7 @@ Usage:
 import os
 import sys
 import time
+import socket
 import threading
 import subprocess
 import webbrowser
@@ -25,15 +26,17 @@ import pyttsx3
 # ──────────────────────────────────────────────────────────────────────────────
 #  Configuración
 # ──────────────────────────────────────────────────────────────────────────────
-SAMPLE_RATE    = 44100
-BLOCK_SIZE     = int(SAMPLE_RATE * 0.05)   # 50 ms por bloque
-THRESHOLD      = 0.20     # RMS mínimo para contar como aplauso  ← ajusta si falla
-COOLDOWN       = 0.1    # segundos de pausa mínima entre aplausos
-DOUBLE_WINDOW  = 2.0     # ventana de tiempo para el segundo aplauso
+SAMPLE_RATE   = 44100
+BLOCK_SIZE    = int(SAMPLE_RATE * 0.05)   # 50 ms por bloque
+THRESHOLD     = 0.20     # RMS mínimo para contar como aplauso  ← ajusta si falla
+COOLDOWN      = 0.1      # segundos de pausa mínima entre aplausos
+DOUBLE_WINDOW = 2.0      # ventana de tiempo para el segundo aplauso
 
-YOUTUBE_URL    = "https://www.youtube.com/watch?v=hEIexwwiKKU"
-MENSAJE        = "Welcome home, sir. All systems are online and ready."
-NEW_PROJECT    = os.path.expanduser("~/Desktop/stark_industries")
+YOUTUBE_URL       = "https://www.youtube.com/watch?v=hEIexwwiKKU"
+YOUTUBE_MUSIC_URL = "https://music.youtube.com/"
+
+MENSAJE         = "Welcome home, sir. All systems are online and running smoothly. Opening your workspace now."
+MENSAJE_OFFLINE = "Welcome home, sir. Internet connection is unavailable. All systems are operating in offline mode."
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Estado global
@@ -80,25 +83,33 @@ def audio_callback(indata, frames, time_info, status):
 def secuencia_bienvenida():
     print("\n[ JARVIS ]  Initializing welcome sequence...\n")
 
-    hablar(MENSAJE)
-    abrir_youtube()
-    abrir_apps_lado_a_lado()
+    if internet_disponible():
+        hablar(MENSAJE)
+        abrir_musica()
+    else:
+        print("  [ JARVIS ]  No internet connection detected.")
+        hablar(MENSAJE_OFFLINE)
+
+    abrir_espacio_trabajo()
 
     print("\n[ JARVIS ]  All systems nominal. Good to have you back, sir.\n")
 
 
 def hablar(texto: str):
-    """TTS local con pyttsx3 (usa voces del sistema, sin API key)."""
+    """TTS: tries macOS 'say' with British voice first, falls back to pyttsx3."""
     print(f"  [ JARVIS ]  Vocalizing: \"{texto}\"")
 
     # Prefer Daniel (British English) — closest to JARVIS's accent
     for voice in ["Daniel", "Oliver", "Alex"]:
-        resultado = subprocess.run(
-            ["say", "-v", voice, texto],
-            capture_output=True
-        )
-        if resultado.returncode == 0:
-            return
+        try:
+            resultado = subprocess.run(
+                ["say", "-v", voice, texto],
+                capture_output=True
+            )
+            if resultado.returncode == 0:
+                return
+        except (FileNotFoundError, OSError):
+            break  # 'say' command not available — fall through to pyttsx3
 
     # Fallback: pyttsx3
     engine = pyttsx3.init()
@@ -117,87 +128,46 @@ def hablar(texto: str):
     engine.runAndWait()
 
 
-def abrir_youtube():
-    print(f"  [ JARVIS ]  Launching music, sir...")
+def abrir_musica():
+    print(f"  [ JARVIS ]  Launching YouTube, sir...")
     webbrowser.open(YOUTUBE_URL)
-    time.sleep(1.2)
+    time.sleep(0.5)
+
+    print(f"  [ JARVIS ]  Launching YouTube Music...")
+    webbrowser.open(YOUTUBE_MUSIC_URL)
+    time.sleep(0.5)
 
 
-def abrir_apps_lado_a_lado():
-    sw, sh = obtener_resolucion_pantalla()
-    mitad = sw // 2
+def abrir_espacio_trabajo():
+    apps_to_open = [
+        ("Antigravity", ["open", "-a", "Antigravity"]),
+        ("Claude",      ["open", "-a", "Claude"]),
+    ]
 
-    # Asegura que existe la carpeta del nuevo proyecto
-    os.makedirs(NEW_PROJECT, exist_ok=True)
+    for name, cmd in apps_to_open:
+        print(f"  [ JARVIS ]  Initializing {name}...")
+        subprocess.Popen(cmd)
+        time.sleep(0.5)
 
-    # ── Open Claude ──────────────────────────────────────────────────────────
-    print("  [ JARVIS ]  Bringing up AI interface...")
-    subprocess.Popen(["open", "-a", "Claude"])
-    time.sleep(1.8)
-
-    # ── Open Cursor with project ─────────────────────────────────────────────
-    print("  [ JARVIS ]  Loading Stark Industries workspace...")
-    cursor_cmd = encontrar_cursor()
-    if cursor_cmd:
-        subprocess.Popen([cursor_cmd, NEW_PROJECT])
-    else:
-        subprocess.Popen(["open", "-a", "Cursor", NEW_PROJECT])
-    time.sleep(1.8)
-
-    # ── Arrange windows side by side via AppleScript ─────────────────────────
-    print("  [ JARVIS ]  Configuring holographic display...")
-    applescript = f"""
-    tell application "System Events"
-        try
-            tell process "Claude"
-                set frontmost to true
-                set position of window 1 to {{0, 0}}
-                set size of window 1 to {{{mitad}, {sh}}}
-            end tell
-        end try
-        try
-            tell process "Cursor"
-                set frontmost to true
-                set position of window 1 to {{{mitad}, 0}}
-                set size of window 1 to {{{mitad}, {sh}}}
-            end tell
-        end try
-    end tell
-    """
-    subprocess.run(["osascript", "-e", applescript], capture_output=True)
+    # Open Terminal and launch Claude Code CLI inside it
+    print("  [ JARVIS ]  Launching Claude Code in Terminal...")
+    subprocess.Popen([
+        "osascript", "-e",
+        'tell application "Terminal" to do script "claude"'
+    ])
 
 
 # ──────────────────────────────────────────────────────────────────────────────
 #  Utilidades
 # ──────────────────────────────────────────────────────────────────────────────
-def obtener_resolucion_pantalla() -> tuple[int, int]:
+def internet_disponible() -> bool:
+    """Returns True if internet is reachable (pings Google DNS)."""
     try:
-        out = subprocess.run(
-            ["osascript", "-e",
-             "tell application \"Finder\" to get bounds of window of desktop"],
-            capture_output=True, text=True
-        ).stdout.strip()
-        parts = [int(x.strip()) for x in out.split(",")]
-        return parts[2], parts[3]
-    except Exception:
-        return 1920, 1080
-
-
-def encontrar_cursor():
-    """Devuelve la ruta del CLI de Cursor si está disponible."""
-    candidatos = [
-        "/usr/local/bin/cursor",
-        "/opt/homebrew/bin/cursor",
-        os.path.expanduser("~/.cursor/bin/cursor"),
-    ]
-    for path in candidatos:
-        if os.path.isfile(path):
-            return path
-    # Intenta por PATH
-    result = subprocess.run(["which", "cursor"], capture_output=True, text=True)
-    if result.returncode == 0:
-        return result.stdout.strip()
-    return None
+        socket.setdefaulttimeout(2)
+        socket.create_connection(("8.8.8.8", 53))
+        return True
+    except OSError:
+        return False
 
 
 # ──────────────────────────────────────────────────────────────────────────────
