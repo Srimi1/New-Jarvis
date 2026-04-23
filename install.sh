@@ -51,14 +51,14 @@ echo "  Installing dependencies (this may take a moment)..."
 "$SCRIPT_DIR/.venv/bin/pip" install -q -r "$SCRIPT_DIR/requirements.txt"
 echo "  Dependencies installed ................ OK"
 
-# 5. Check for claude CLI (non-blocking warning) ───────────────────────────────
-if command -v claude &>/dev/null; then
-    echo "  Claude Code CLI ....................... OK"
+# 5. Check for gemini CLI (non-blocking warning) ──────────────────────────────
+if command -v gemini &>/dev/null; then
+    echo "  Gemini CLI ............................ OK"
 else
     echo ""
-    echo "  WARNING: 'claude' CLI not found."
-    echo "  JARVIS will open Terminal but the 'claude' command will fail inside it."
-    echo "  Install Claude Code: https://claude.ai/code"
+    echo "  WARNING: 'gemini' CLI not found."
+    echo "  JARVIS will open Terminal but the 'gemini' command will fail inside it."
+    echo "  Install Gemini CLI: https://github.com/google-gemini/gemini-cli"
     echo ""
 fi
 
