@@ -75,13 +75,23 @@ LAUNCHER
 chmod +x "$SCRIPT_DIR/jarvis.sh"
 echo "  Launcher (jarvis.sh) created .......... OK"
 
+# 8. Install global 'jarvis' command ──────────────────────────────────────────
+INSTALL_DIR="/usr/local/bin"
+if [[ -w "$INSTALL_DIR" ]]; then
+    ln -sf "$SCRIPT_DIR/jarvis.sh" "$INSTALL_DIR/jarvis"
+    echo "  Global 'jarvis' command ............... OK"
+else
+    sudo ln -sf "$SCRIPT_DIR/jarvis.sh" "$INSTALL_DIR/jarvis"
+    echo "  Global 'jarvis' command (sudo) ........ OK"
+fi
+
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
 echo "======================================================"
 echo "  Installation complete!"
 echo ""
-echo "  To run JARVIS:"
-echo "    ./jarvis.sh"
+echo "  To run JARVIS from anywhere, just type:"
+echo "    jarvis"
 echo ""
 echo "  IMPORTANT: When macOS asks for microphone access,"
 echo "  click Allow — JARVIS needs it to hear your claps."
