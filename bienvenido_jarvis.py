@@ -149,11 +149,11 @@ def abrir_espacio_trabajo():
         subprocess.Popen(cmd)
         time.sleep(0.5)
 
-    # Open Terminal and launch Claude Code CLI inside it
-    print("  [ JARVIS ]  Launching Claude Code in Terminal...")
+    # Open Terminal and launch Gemini CLI inside it
+    print("  [ JARVIS ]  Launching Gemini in Terminal...")
     subprocess.Popen([
         "osascript", "-e",
-        'tell application "Terminal" to do script "claude"'
+        'tell application "Terminal" to do script "gemini"'
     ])
 
 
