@@ -51,14 +51,14 @@ echo "  Installing dependencies (this may take a moment)..."
 "$SCRIPT_DIR/.venv/bin/pip" install -q -r "$SCRIPT_DIR/requirements.txt"
 echo "  Dependencies installed ................ OK"
 
-# 5. Check for claude CLI (non-blocking warning) ───────────────────────────────
-if command -v claude &>/dev/null; then
-    echo "  Claude Code CLI ....................... OK"
+# 5. Check for gemini CLI (non-blocking warning) ──────────────────────────────
+if command -v gemini &>/dev/null; then
+    echo "  Gemini CLI ............................ OK"
 else
     echo ""
-    echo "  WARNING: 'claude' CLI not found."
-    echo "  JARVIS will open Terminal but the 'claude' command will fail inside it."
-    echo "  Install Claude Code: https://claude.ai/code"
+    echo "  WARNING: 'gemini' CLI not found."
+    echo "  JARVIS will open Terminal but the 'gemini' command will fail inside it."
+    echo "  Install Gemini CLI: https://github.com/google-gemini/gemini-cli"
     echo ""
 fi
 
@@ -75,13 +75,38 @@ LAUNCHER
 chmod +x "$SCRIPT_DIR/jarvis.sh"
 echo "  Launcher (jarvis.sh) created .......... OK"
 
+# 8. Register 'jarvis' as a global shell command ───────────────────────────────
+# Primary: symlink in /usr/local/bin (works in all shells)
+INSTALL_DIR="/usr/local/bin"
+if [[ -w "$INSTALL_DIR" ]]; then
+    ln -sf "$SCRIPT_DIR/jarvis.sh" "$INSTALL_DIR/jarvis"
+    echo "  Global command /usr/local/bin/jarvis .. OK"
+else
+    sudo ln -sf "$SCRIPT_DIR/jarvis.sh" "$INSTALL_DIR/jarvis" 2>/dev/null && \
+        echo "  Global command /usr/local/bin/jarvis .. OK" || \
+        echo "  NOTE: Could not write to /usr/local/bin — using shell alias instead."
+fi
+
+# Fallback: add alias to ~/.zshrc (macOS default shell)
+ZSHRC="$HOME/.zshrc"
+ALIAS_LINE="alias jarvis=\"$SCRIPT_DIR/jarvis.sh\""
+MARKER="# J.A.R.V.I.S. command"
+if grep -qF "alias jarvis=" "$ZSHRC" 2>/dev/null; then
+    # Update existing alias in case the path changed
+    sed -i '' "s|alias jarvis=.*|$ALIAS_LINE|" "$ZSHRC"
+    echo "  Shell alias in ~/.zshrc (updated) ..... OK"
+else
+    printf '\n%s\n%s\n' "$MARKER" "$ALIAS_LINE" >> "$ZSHRC"
+    echo "  Shell alias added to ~/.zshrc ......... OK"
+fi
+
 # ─────────────────────────────────────────────────────────────────────────────
 echo ""
 echo "======================================================"
 echo "  Installation complete!"
 echo ""
-echo "  To run JARVIS:"
-echo "    ./jarvis.sh"
+echo "  Open a new Terminal tab and type:"
+echo "    jarvis"
 echo ""
 echo "  IMPORTANT: When macOS asks for microphone access,"
 echo "  click Allow — JARVIS needs it to hear your claps."

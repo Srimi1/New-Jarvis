@@ -42,22 +42,16 @@ Install Antigravity from its official source or the Mac App Store.
 ### Claude Desktop App
 Download from [claude.ai](https://claude.ai) → click **Download for Mac** → drag to Applications.
 
-### Claude Code CLI (`claude` command)
-JARVIS opens Terminal and runs `claude` inside it. Install the CLI with one of these methods:
+### Gemini CLI (`gemini` command)
+JARVIS opens Terminal and runs `gemini` inside it. Install the CLI:
 
-**Option A — via npm (recommended):**
 ```bash
-npm install -g @anthropic-ai/claude-code
-```
-
-**Option B — via pip:**
-```bash
-pip install claude-code
+npm install -g @google/gemini-cli
 ```
 
 Verify it works:
 ```bash
-claude --version
+gemini --version
 ```
 
 ### Python 3.9+
@@ -110,21 +104,22 @@ chmod +x install.sh && ./install.sh
   Virtual environment created ........... OK
   Installing dependencies (this may take a moment)...
   Dependencies installed ................ OK
-  Claude Code CLI ....................... OK
+  Gemini CLI ............................ OK
   Launcher (jarvis.sh) created .......... OK
+  Global 'jarvis' command ............... OK
 
 ======================================================
   Installation complete!
 
-  To run JARVIS:
-    ./jarvis.sh
+  To run JARVIS from anywhere, just type:
+    jarvis
 
   IMPORTANT: When macOS asks for microphone access,
   click Allow — JARVIS needs it to hear your claps.
 ======================================================
 ```
 
-> If you see a **WARNING** about `claude` CLI not found, install it first (see Step 2) then re-run `./install.sh`.
+> If you see a **WARNING** about `gemini` CLI not found, install it first (see Step 2) then re-run `./install.sh`.
 
 **What the installer creates:**
 
@@ -154,10 +149,10 @@ Without microphone access, JARVIS cannot hear your claps.
 
 ## 6. Start JARVIS
 
-Every time you want JARVIS running:
+Every time you want JARVIS running, just type from any Terminal window:
 
 ```bash
-./jarvis.sh
+jarvis
 ```
 
 You should see:
@@ -225,7 +220,7 @@ Check internet connection
         ▼
 Opens Antigravity
 Opens Claude desktop app
-Opens Terminal → runs 'claude' (Claude Code CLI) inside it
+Opens Terminal → runs 'gemini' (Gemini CLI) inside it
 
         │
         ▼
@@ -297,11 +292,11 @@ THRESHOLD = 0.35
 
 ---
 
-### `claude` command not found / fails in Terminal
+### `gemini` command not found / fails in Terminal
 
-**Fix:** Install Claude Code CLI:
+**Fix:** Install Gemini CLI:
 ```bash
-npm install -g @anthropic-ai/claude-code
+npm install -g @google/gemini-cli
 ```
 Then re-run `./install.sh` to confirm it's detected.
 
@@ -376,9 +371,10 @@ To remove everything the installer created:
 
 ```bash
 rm -rf .venv jarvis.sh
+sudo rm -f /usr/local/bin/jarvis
 ```
 
-This removes the virtual environment and launcher but keeps your source code intact. To fully remove JARVIS, delete the entire `New-Jarvis/` folder.
+This removes the virtual environment, launcher, and global command. To fully remove JARVIS, also delete the `New-Jarvis/` folder.
 
 ---
 
